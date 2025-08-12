@@ -15,14 +15,14 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addResourceHandler("/uploads/**")
                 .addResourceLocations("file:uploads/");
     }
-    
+
 //    @Bean
 //    public WebMvcConfigurer corsConfigurer() {
 //        return new WebMvcConfigurer() {
 //            @Override
 //            public void addCorsMappings(CorsRegistry registry) {
-//                registry.addMapping("/api/**")  // Adjust path if needed
-//                        .allowedOrigins("http://localhost:8080")  // Flutter Web dev server URL, or your deployed frontend URL
+//                registry.addMapping("/api/**")
+//                        .allowedOrigins("http://localhost:8080")  // Flutter web? Or change to your Flutter app origin
 //                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
 //                        .allowedHeaders("*")
 //                        .allowCredentials(true);

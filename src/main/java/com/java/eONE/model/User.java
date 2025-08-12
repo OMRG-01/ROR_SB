@@ -42,6 +42,17 @@ public class User {
     private LocalDateTime updatedAt;
 
     // Getters and setters
+    @Transient
+    private String password;  // plain password input from client (not persisted)
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
     
     @PrePersist
     protected void onCreate() {

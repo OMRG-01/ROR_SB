@@ -2,12 +2,17 @@ package com.java.eONE.DTO;
 
 import java.time.LocalDate;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class UserResponseDTO {
     private Long id;
     private String email;
     private String name;
+    
+    @JsonProperty("mobile_number")
     private String mobileNumber;
     private Integer status;
+    @JsonProperty("date_of_birth")
     private LocalDate dateOfBirth;
     private String role;
     private String classroom;

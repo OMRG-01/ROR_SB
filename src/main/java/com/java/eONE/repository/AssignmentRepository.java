@@ -17,4 +17,7 @@ public interface AssignmentRepository extends JpaRepository<Assignment, Long> {
     // You need this to fetch submissions for an assignment (adjust accordingly)
     @Query("SELECT s FROM AssignmentSubmission s WHERE s.assignment.id = :assignmentId")
     List<?> findSubmissionsByAssignmentId(Long assignmentId);
+    
+    long countByTeacherId(Long teacherId);
+   
 }

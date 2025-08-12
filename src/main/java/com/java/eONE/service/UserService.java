@@ -1,12 +1,16 @@
 package com.java.eONE.service;
 
 import com.java.eONE.model.User;
+import com.java.eONE.repository.AssignmentRepository;
 import com.java.eONE.repository.ClassroomRepository;
 import com.java.eONE.repository.RoleRepository;
+import com.java.eONE.repository.SubjectRepository;
 import com.java.eONE.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import com.java.eONE.DTO.TeacherDashboardCountDTO;
 import com.java.eONE.DTO.UserResponseDTO;
 import com.java.eONE.model.Role;
 
@@ -29,6 +33,14 @@ public class UserService {
     @Autowired private ClassroomRepository classroomRepository;
     @Autowired private MailService mailService;
     
+    @Autowired
+    private SubjectRepository subjectRepository;
+
+   
+
+    @Autowired
+    private AssignmentRepository assignmentRepository;
+    
   //  @Autowired private MailService mailService; // You create this for sending emails
     
     public Optional<User> authenticate(String email, String rawPassword) {
@@ -50,7 +62,14 @@ public class UserService {
     
     @Transactional
     public UserResponseDTO registerUser(User user) {
-        user.setStatus(0); // pending status (adjust if you use enum)
+        // Hash the raw password from the user before saving
+        String rawPassword = user.getPasswordDigest(); // Or change your User DTO to accept a "password" field if needed
+        if (rawPassword != null) {
+            String encodedPassword = passwordEncoder.encode(rawPassword);
+            user.setPasswordDigest(encodedPassword);
+        }
+
+        user.setStatus(0); // pending approval
         User savedUser = userRepository.save(user);
         return toDTO(savedUser, null);
     }
@@ -140,5 +159,28 @@ public class UserService {
                 user.getClassroom() != null ? user.getClassroom().getId() : null,
                 token
         );
+    }
+    
+    public TeacherDashboardCountDTO getTeacherDashboardCount(Long teacherId) {
+        TeacherDashboardCountDTO dto = new TeacherDashboardCountDTO();
+
+        // 1. Subjects by teacher
+        long subjectCount = subjectRepository.countByTeacherId(teacherId);
+
+        // 2. Approved students in teacher's classrooms
+        long studentCount = userRepository.countStudentsByTeacherIdAndStatus(teacherId, 1);
+
+        // 3. Assignments by teacher
+        long assignmentCount = assignmentRepository.countByTeacherId(teacherId);
+
+        // 4. Pending approvals
+        long pendingApprovalCount = userRepository.countStudentsByTeacherIdAndStatus(teacherId, 0);
+
+        dto.setSubjectCount(subjectCount);
+        dto.setStudentCount(studentCount);
+        dto.setAssignmentCount(assignmentCount);
+        dto.setPendingApprovalCount(pendingApprovalCount);
+
+        return dto;
     }
 }

@@ -7,6 +7,7 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -28,4 +29,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
 	    // Count students by classroom, role and status
 	    long countByClassroomIdAndRoleIdAndStatus(Long classroomId, Long roleId, Integer status);
+	    
+	    @Query("SELECT COUNT(DISTINCT u.id) FROM User u " +
+	            "JOIN u.classroom c " +
+	            "JOIN Subject s ON s.classroom.id = c.id " +
+	            "WHERE s.teacher.id = :teacherId " +
+	            "AND u.role.name = 'Student' " +
+	            "AND u.status = :status")
+	     long countStudentsByTeacherIdAndStatus(@Param("teacherId") Long teacherId,
+	                                            @Param("status") int status);
 }
