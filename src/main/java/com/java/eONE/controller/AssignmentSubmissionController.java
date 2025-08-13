@@ -11,10 +11,23 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
+
 
 @RestController
 @CrossOrigin(origins = "*")
-@RequestMapping("/api/v1/assignment-submissions")
+@RequestMapping("/api/v1/assignment_submissions")
 public class AssignmentSubmissionController {
 
     private final AssignmentSubmissionService submissionService;
@@ -32,29 +45,54 @@ public class AssignmentSubmissionController {
         this.notificationRepository = notificationRepository;
     }
 
-    @PostMapping
-    public ResponseEntity<?> createSubmission(@RequestBody AssignmentSubmissionRequestDTO dto) {
-        var assignment = assignmentRepository.findById(dto.getAssignmentId()).orElse(null);
-        var user = userRepository.findById(dto.getUserId()).orElse(null);
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> createSubmission(
+            @RequestParam("assignment_submission[assignment_id]") Long assignmentId,
+            @RequestParam("assignment_submission[user_id]") Long userId,
+            @RequestParam("assignment_submission[file]") MultipartFile file) {
+
+        var assignment = assignmentRepository.findById(assignmentId).orElse(null);
+        var user = userRepository.findById(userId).orElse(null);
 
         if (assignment == null || user == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("error", "Invalid assignment_id or user_id"));
         }
 
+        // Use your existing folder
+        String uploadDir = System.getProperty("user.dir") + File.separator + "submissionFile";
+        String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+        Path filePath = Paths.get(uploadDir, fileName);
+
+        try {
+            // Make sure folder exists
+            Files.createDirectories(Paths.get(uploadDir));
+
+            // Save the uploaded file
+            file.transferTo(filePath.toFile());
+        } catch (IOException e) {
+            e.printStackTrace(); // See exact cause
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Failed to save file"));
+        }
+
+        // Save submission record
         AssignmentSubmission submission = new AssignmentSubmission();
         submission.setAssignment(assignment);
         submission.setUser(user);
-        submission.setFile(dto.getFile());
-        submission.setCreatedAt(java.time.LocalDateTime.now());
-        submission.setUpdatedAt(java.time.LocalDateTime.now());
+        submission.setFile(fileName); // save filename only
+        submission.setCreatedAt(LocalDateTime.now());
+        submission.setUpdatedAt(LocalDateTime.now());
 
         AssignmentSubmission savedSubmission = submissionService.saveSubmission(submission);
 
+        // Notify teacher
         Notification notification = new Notification();
         notification.setUser(user);
         notification.setAssignment(assignment);
         notification.setMessage(user.getName() + " has completed an assignment: " + assignment.getTitle() + ". Please review it.");
+        notification.setCreatedAt(LocalDateTime.now());  // ✅ add this
+        notification.setUpdatedAt(LocalDateTime.now());  // ✅ add this
         notificationRepository.save(notification);
 
         AssignmentSubmissionResponseDTO responseDTO = new AssignmentSubmissionResponseDTO();
@@ -66,14 +104,13 @@ public class AssignmentSubmissionController {
         responseDTO.setUpdatedAt(savedSubmission.getUpdatedAt());
         responseDTO.setMarks(savedSubmission.getMarks());
         responseDTO.setGrade(savedSubmission.getGrade());
-        responseDTO.setFileUrl("https://yourdomain.com/uploads/" + savedSubmission.getFile());
+        responseDTO.setFileUrl("http://192.168.1.33:8080/submissionFile/" + savedSubmission.getFile());
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("message", "Submission successful");
-        response.put("submission", responseDTO);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(Map.of("message", "Submission successful", "submission", responseDTO));
     }
+
+
 
 
     @PutMapping("/{id}")

@@ -26,9 +26,11 @@ public class AssignmentSubmission {
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
-
+    
+    @Column(nullable = true)
     private Integer marks;
 
+    @Column(nullable = true)
     private String grade;
 
     // Getters and setters
@@ -100,9 +102,9 @@ public class AssignmentSubmission {
     // Helper method to get file URL (similar to Rails' file_url)
     public String getFileUrl() {
         if (file != null && !file.isEmpty()) {
-            // Replace base URL with your actual file storage path
-        	 return "http://localhost:8080/uploads/" + file;
+            return "http://localhost:8080/submissionFile/" + file;
         }
         return null;
     }
+
 }
