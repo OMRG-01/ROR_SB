@@ -14,7 +14,11 @@ public class WebConfig implements WebMvcConfigurer {
         // Map URL /uploads/** to local folder uploads/
         registry.addResourceHandler("/uploads/**")
                 .addResourceLocations("file:uploads/");
+        registry.addResourceHandler("/submissionFile/**")
+        .addResourceLocations("file:" + System.getProperty("user.dir") + "/submissionFile/");
     }
+    
+    
 
 //    @Bean
 //    public WebMvcConfigurer corsConfigurer() {

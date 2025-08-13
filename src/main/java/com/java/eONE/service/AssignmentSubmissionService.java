@@ -1,5 +1,6 @@
 package com.java.eONE.service;
 
+import com.java.eONE.DTO.ViewSubmittedAssignmentDTO;
 import com.java.eONE.model.AssignmentSubmission;
 
 import java.util.List;
@@ -10,5 +11,8 @@ public interface AssignmentSubmissionService {
     Optional<AssignmentSubmission> getSubmissionById(Long id);
     AssignmentSubmission updateMarksAndGrade(Long id, Integer marks, String grade);
     List<AssignmentSubmission> findByUserId(Long userId);
+    List<ViewSubmittedAssignmentDTO> getSubmissionsByAssignment(Long assignmentId);
+    
+    boolean submitMarks(Long submissionId, Integer marks, String grade);
 
 }

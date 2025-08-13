@@ -13,8 +13,11 @@ import java.util.List;
 @RequestMapping("/api/v1/notifications")
 public class NotificationsController {
 
-    @Autowired
-    private NotificationService notificationService;
+    private final NotificationService notificationService;
+
+    public NotificationsController(NotificationService notificationService) {
+        this.notificationService = notificationService;
+    }
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getUserNotifications(
@@ -24,8 +27,10 @@ public class NotificationsController {
         List<NotificationMessageDTO> notifications = notificationService.getUserNotifications(id, limit);
 
         if (notifications == null) {
-            return ResponseEntity.status(404).body("{\"error\":\"User not found\"}");
+            notifications = List.of(); // return empty list instead of null
         }
+
         return ResponseEntity.ok(notifications);
     }
 }
+

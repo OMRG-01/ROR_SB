@@ -108,7 +108,10 @@ public class AssignmentSubmissionController {
         responseDTO.setUpdatedAt(savedSubmission.getUpdatedAt());
         responseDTO.setMarks(savedSubmission.getMarks());
         responseDTO.setGrade(savedSubmission.getGrade());
-        responseDTO.setFileUrl("http://192.168.1.33:8080/submissionFile/" + savedSubmission.getFile());
+        String serverIp = "192.168.1.33"; // Your PC's LAN IP
+        responseDTO.setFileUrl("http://" + serverIp + ":8080/submissionFile/" + savedSubmission.getFile());
+
+//        responseDTO.setFileUrl("http://192.168.1.33:8080/submissionFile/" + savedSubmission.getFile());
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(Map.of("message", "Submission successful", "submission", responseDTO));
@@ -117,23 +120,18 @@ public class AssignmentSubmissionController {
 
 
 
-    @PutMapping("/{id}")
-    public ResponseEntity<?> updateMarksAndGrade(@PathVariable Long id,
-                                                 @RequestParam Integer marks,
-                                                 @RequestParam String grade) {
-        try {
-            AssignmentSubmission updatedSubmission = submissionService.updateMarksAndGrade(id, marks, grade);
+    @PatchMapping("/{id}")
+    public ResponseEntity<?> updateMarksAndGrade(
+        @PathVariable Long id,
+        @RequestBody Map<String, Object> payload
+    ) {
+        Integer marks = (Integer) payload.get("marks");
+        String grade = (String) payload.get("grade");
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("message", "Marks updated successfully");
-            response.put("submission", updatedSubmission); // Consider DTO
-
-            return ResponseEntity.ok(response);
-
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
-        }
+        AssignmentSubmission updatedSubmission = submissionService.updateMarksAndGrade(id, marks, grade);
+        return ResponseEntity.ok(Map.of("message", "Marks updated successfully", "submission", updatedSubmission));
     }
+
     
     @GetMapping
     public ResponseEntity<?> getSubmissionsByStudent(@RequestParam("student_id") Long studentId) {

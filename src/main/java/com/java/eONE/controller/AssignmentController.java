@@ -2,6 +2,7 @@ package com.java.eONE.controller;
 
 import com.java.eONE.DTO.AssignmentRequestDTO;
 import com.java.eONE.DTO.AssignmentResponseDTO;
+import com.java.eONE.DTO.ViewSubmittedAssignmentDTO;
 import com.java.eONE.model.Assignment;
 import com.java.eONE.model.Notification;
 import com.java.eONE.model.Subject;
@@ -10,9 +11,12 @@ import com.java.eONE.repository.AssignmentRepository;
 import com.java.eONE.repository.NotificationRepository;
 import com.java.eONE.repository.SubjectRepository;
 import com.java.eONE.repository.UserRepository;
+import com.java.eONE.service.AssignmentSubmissionService;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
 import org.springframework.web.multipart.MultipartFile;
@@ -28,9 +32,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
 
 @RestController
 @CrossOrigin(origins = "*")
@@ -167,12 +168,33 @@ public class AssignmentController {
 
     @GetMapping("/{id}/submissions")
     public ResponseEntity<?> getSubmissions(@PathVariable Long id) {
-        var submissions = assignmentRepository.findSubmissionsByAssignmentId(id);
-        // You need to implement this in your repository or service
-        // Also map to DTO for submissions, omitted here for brevity
+        List<ViewSubmittedAssignmentDTO> submissions = submissionService.getSubmissionsByAssignment(id);
+
+        if (submissions.isEmpty()) {
+            return ResponseEntity.ok().body(List.of()); // Return empty list instead of 400
+        }
         return ResponseEntity.ok(submissions);
     }
+  
+    @PatchMapping("/{submissionId}")
+    public ResponseEntity<?> submitMarks(
+            @PathVariable Long submissionId,
+            @RequestBody Map<String, Object> payload
+    ) {
+        Integer marks = (Integer) payload.get("marks");
+        String grade = (String) payload.get("grade");
+        boolean success = submissionService.submitMarks(submissionId, marks, grade);
 
+        if(success) {
+            return ResponseEntity.ok(Map.of("message", "Marks submitted successfully"));
+        } else {
+            return ResponseEntity.badRequest().body(Map.of("error", "Submission not found"));
+        }
+    }
+
+    @Autowired
+    private AssignmentSubmissionService submissionService;
+    
     private AssignmentResponseDTO mapToResponseDTO(Assignment assignment) {
         AssignmentResponseDTO dto = new AssignmentResponseDTO();
         dto.setId(assignment.getId());
