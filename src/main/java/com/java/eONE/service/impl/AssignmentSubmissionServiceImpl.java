@@ -5,6 +5,7 @@ import com.java.eONE.repository.AssignmentSubmissionRepository;
 import com.java.eONE.service.AssignmentSubmissionService;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -15,6 +16,12 @@ public class AssignmentSubmissionServiceImpl implements AssignmentSubmissionServ
     public AssignmentSubmissionServiceImpl(AssignmentSubmissionRepository submissionRepository) {
         this.submissionRepository = submissionRepository;
     }
+    
+    @Override
+    public List<AssignmentSubmission> findByUserId(Long userId) {
+        return submissionRepository.findByUserId(userId);
+    }
+
 
     @Override
     public AssignmentSubmission saveSubmission(AssignmentSubmission submission) {

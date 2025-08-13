@@ -10,7 +10,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -130,4 +134,32 @@ public class AssignmentSubmissionController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
         }
     }
+    
+    @GetMapping
+    public ResponseEntity<?> getSubmissionsByStudent(@RequestParam("student_id") Long studentId) {
+        Optional<User> studentOpt = userRepository.findById(studentId);
+        if(studentOpt.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Invalid student_id"));
+        }
+
+        List<AssignmentSubmission> submissions = submissionService.findByUserId(studentId);
+        List<AssignmentSubmissionResponseDTO> dtos = submissions.stream()
+                .map(sub -> {
+                    AssignmentSubmissionResponseDTO dto = new AssignmentSubmissionResponseDTO();
+                    dto.setId(sub.getId());
+                    dto.setAssignmentId(sub.getAssignment().getId());
+                    dto.setUserId(sub.getUser().getId());
+                    dto.setFile(sub.getFile());
+                    dto.setCreatedAt(sub.getCreatedAt());
+                    dto.setUpdatedAt(sub.getUpdatedAt());
+                    dto.setMarks(sub.getMarks());
+                    dto.setGrade(sub.getGrade());
+                    dto.setFileUrl("http://localhost:8080/uploads/" + sub.getFile());
+                    return dto;
+                }).collect(Collectors.toList());
+
+        return ResponseEntity.ok(dtos);
+    }
+
+
 }
